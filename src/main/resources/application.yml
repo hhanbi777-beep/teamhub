@@ -1,0 +1,29 @@
+spring:
+  application:
+    name: teamhub
+
+  # DB 설정 (Docker MySQL 연결)
+  datasource:
+    url: jdbc:mysql://localhost:3306/teamhub?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    username: teamhub
+    password: teamhub1234
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  # JPA 설정
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQLDialect
+
+  # Spring Security - 일단 기본 로그인 비활성화
+  security:
+    user:
+      name: admin
+      password: admin
+
+server:
+  port: 8080
