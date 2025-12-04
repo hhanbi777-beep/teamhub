@@ -9,7 +9,7 @@ import lombok.*;
 @Entity
 @Table(name = "users")
 @Getter
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
 public class User extends BaseEntity {
@@ -21,19 +21,24 @@ public class User extends BaseEntity {
     @Column(nullable = false, unique = true)
     private String email;
 
+    private String password;
+
     @Column(nullable = false)
     private String name;
 
     private String profileImage;
 
-    @Column(nullable = false)
     private String providerId;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
     private AuthProvider provider;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private UserRole role;
+
+    public void updateProfile(String name, String profileImage) {
+        this.name=name;
+        this.profileImage=profileImage;
+    }
 }
