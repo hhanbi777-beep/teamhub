@@ -11,7 +11,7 @@ import lombok.Getter;
 public class AuthResponse {
     private String accessToken;
     private String refreshToken;
-    private UserInfo userInfo;
+    private UserInfo user;
 
     @Getter
     @Builder

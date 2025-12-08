@@ -2,9 +2,11 @@ package com.teamhub.service;
 
 import com.teamhub.domain.user.RefreshToken;
 import com.teamhub.domain.user.User;
+import com.teamhub.dto.request.LoginRequest;
 import com.teamhub.dto.request.SignUpRequest;
 import com.teamhub.dto.request.TokenRefreshRequest;
 import com.teamhub.dto.response.AuthResponse;
+import com.teamhub.enums.user.AuthProvider;
 import com.teamhub.enums.user.UserRole;
 import com.teamhub.exception.CustomException;
 import com.teamhub.repository.RefreshTokenRepository;
@@ -17,6 +19,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
 
 @Slf4j
 @Service
@@ -42,13 +46,31 @@ public class AuthService {
                 .password(passwordEncoder.encode(req.getPassword()))
                 .name(req.getName())
                 .role(UserRole.USER)
+                .provider(AuthProvider.LOCAL)
                 .build();
 
         userRepository.save(user);
         log.info("New user registered: {}", user.getEmail());
 
         //토큰 생성 및 반환
-        return createAuthRespose(user);
+        return createAuthResponse(user);
+    }
+
+    @Transactional
+    public AuthResponse login(LoginRequest req) {
+        //사용자 조회
+        User user = userRepository.findByEmail(req.getEmail())
+                .orElseThrow(() -> new CustomException("이메일 또는 비밀번호가 올바르지 않습니다", HttpStatus.UNAUTHORIZED));
+
+        //비밀번호 확인
+        if(!passwordEncoder.matches(req.getPassword(), user.getPassword())) {
+            throw new CustomException("이메일 또는 비밀번호가 올바르지 않습니다", HttpStatus.UNAUTHORIZED);
+        }
+
+        log.info("User login: {}", user.getEmail());
+
+        //토큰 생성 및 반환
+        return createAuthResponse(user);
     }
 
     @Transactional
@@ -64,12 +86,53 @@ public class AuthService {
         }
 
         User user = refreshToken.getUser();
-        return createAuthRespose(user);
+
+        //기존 리프레시 토큰 삭제 후 새로발급
+        refreshTokenRepository.delete(refreshToken);
+
+        log.info("Refresh token registered: {}", user.getEmail());
+
+        return createAuthResponse(user);
     }
 
-    private AuthResponse createAuthRespose(User user) {
-        //엑세스 토큰 생성
+    @Transactional
+    public void logout(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException("사용자를 찾을 수 없습니다", HttpStatus.NOT_FOUND));
 
-        return AuthResponse.builder().build();
+        refreshTokenRepository.deleteByUser(user);
+        log.info("User logout: {}", user.getEmail());
+    }
+
+    private AuthResponse createAuthResponse(User user) {
+        //엑세스 토큰 생성
+        String accessToken = jwtTokenProvider.createAccessToken(user.getId(), user.getEmail());
+
+        //리프레시 토큰 생성 및 저장
+        String refreshToeknStr = jwtTokenProvider.createRefreshToken(user.getId());
+
+        //기존 리프레시토큰 삭제
+        refreshTokenRepository.deleteByUser(user);
+
+        //새 리프레시토큰 저장
+        RefreshToken refreshToken = RefreshToken.builder()
+                .token(refreshToeknStr)
+                .user(user)
+                .expiryDate(LocalDateTime.now().plusSeconds(jwtProperties.getRefreshTokenValidity() / 1000))
+                .build();
+
+        refreshTokenRepository.save(refreshToken);
+
+
+        return AuthResponse.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToeknStr)
+                .user(AuthResponse.UserInfo.builder()
+                        .id(user.getId())
+                        .email(user.getEmail())
+                        .name(user.getName())
+                        .profileImage(user.getProfileImage())
+                        .build())
+                .build();
     }
 }

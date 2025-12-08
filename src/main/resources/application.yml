@@ -4,7 +4,7 @@ spring:
 
   # DB 설정 (Docker MySQL 연결)
   datasource:
-    url: jdbc:mysql://localhost:3306/teamhub?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    url: jdbc:mysql://localhost:3306/teamhub?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
     username: teamhub
     password: teamhub1234
     driver-class-name: com.mysql.cj.jdbc.Driver

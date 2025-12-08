@@ -8,7 +8,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
-import java.security.Key;
 import java.util.Date;
 
 @Slf4j
@@ -23,7 +22,7 @@ public class JwtTokenProvider {
         this.key = Keys.hmacShaKeyFor(jwtProperties.getSecret().getBytes());
     }
 
-    public String cerateAccessToken(Long userId, String email) {
+    public String createAccessToken(Long userId, String email) {
         Date now = new Date();
         Date validity = new Date(now.getTime() + jwtProperties.getAccessTokenValidity());
 
