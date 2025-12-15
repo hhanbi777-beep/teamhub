@@ -118,7 +118,7 @@ public class WorkspaceService {
         User invitee = userRepository.findByEmail(req.getEmail())
                 .orElseThrow(() -> new CustomException("해당 이메일의 사용자를 찾을 수 없습니다", HttpStatus.NOT_FOUND));
 
-        if(workspaceMemberRepository.existsByWorkspaceIdAndUserId(workspaceId, inviter.getId())) {
+        if(workspaceMemberRepository.existsByWorkspaceIdAndUserId(workspaceId, invitee.getId())) {
             throw new CustomException("이미 워크스페이스 멤버입니다", HttpStatus.CONFLICT);
         }
 

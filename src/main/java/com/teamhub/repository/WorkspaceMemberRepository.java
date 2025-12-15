@@ -1,5 +1,6 @@
 package com.teamhub.repository;
 
+import com.teamhub.domain.user.User;
 import com.teamhub.domain.workspace.WorkspaceMember;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -18,4 +19,6 @@ public interface WorkspaceMemberRepository extends JpaRepository<WorkspaceMember
     List<WorkspaceMember> findAllByWorkspaceId(@Param("workspaceId") Long workspaceId);
 
     boolean existsByWorkspaceIdAndUserId(Long workspaceId, Long userId);
+
+    Long user(User user);
 }
