@@ -3,8 +3,9 @@ package com.teamhub.service;
 import com.teamhub.domain.activity.ActivityLog;
 import com.teamhub.domain.user.User;
 import com.teamhub.domain.workspace.Workspace;
-import com.teamhub.dto.response.ActivityLogResonse;
+import com.teamhub.dto.response.ActivityLogResponse;
 import com.teamhub.enums.activity.ActivityType;
+import com.teamhub.enums.activity.TargetType;
 import com.teamhub.exception.CustomException;
 import com.teamhub.repository.ActivityLogRepository;
 import com.teamhub.repository.WorkspaceMemberRepository;
@@ -26,10 +27,10 @@ public class ActivityLogService {
     private final WorkspaceMemberRepository workspaceMemberRepository;
     private final ActivityLogRepository activityLogRepository;
 
-    public void log(Workspace workspace, User actor, String activityType,
-                    String targetType, Long targetId, String targetName, String details) {
+    public void log(Workspace workspace, User actor, ActivityType activityType,
+                    TargetType targetType, Long targetId, String targetName, String details) {
         ActivityLog activityLog  = ActivityLog.builder()
-                .activityType(ActivityType.valueOf(activityType))
+                .activityType(activityType)
                 .workspace(workspace)
                 .actor(actor)
                 .targetType(targetType)
@@ -42,11 +43,11 @@ public class ActivityLogService {
     }
 
     @Transactional(readOnly = true)
-    public List<ActivityLogResonse> getActivities(Long userId, Long workspaceId, int limit) {
+    public List<ActivityLogResponse> getActivities(Long userId, Long workspaceId, int limit) {
         findMemberOrThrow(workspaceId, userId);
-        return activityLogRepository.findByWorkspaceIdOrderByCreatedAtDesc(workspaceId, PageRequest.of(0, limit))
-                .stream()
-                .map(ActivityLogResonse::of)
+        List<ActivityLog> logs = activityLogRepository.findByWorkspaceIdOrderByCreatedAtDesc(workspaceId, PageRequest.of(0, limit));
+        return logs.stream()
+                .map(ActivityLogResponse::of)
                 .collect(Collectors.toList());
     }
 

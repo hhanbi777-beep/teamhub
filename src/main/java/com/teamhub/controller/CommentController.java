@@ -18,7 +18,7 @@ public class CommentController {
 
     private final CommentService commentService;
 
-    @PostMapping
+    @PostMapping("/create")
     public ApiResponse<CommentResponse> createComment(Authentication authentication, @RequestParam Long taskId,
                                                       @Valid @RequestBody CommentRequest req) {
     Long userId = (Long) authentication.getPrincipal();

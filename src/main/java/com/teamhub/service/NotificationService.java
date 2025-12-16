@@ -126,9 +126,11 @@ public class NotificationService {
         notification.markAsRead();
     }
 
-    public void markAllAsRead(Long userId) {
-        notificationRepository.markAllAsRead(userId);
+    @Transactional
+    public int markAllAsRead(Long userId) {
+        int updateCount = notificationRepository.markAllAsRead(userId);
         log.info("All notifications marked as read for user: {}", userId);
+        return updateCount;
     }
 
 }

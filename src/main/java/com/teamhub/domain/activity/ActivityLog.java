@@ -4,6 +4,7 @@ import com.teamhub.domain.common.BaseEntity;
 import com.teamhub.domain.user.User;
 import com.teamhub.domain.workspace.Workspace;
 import com.teamhub.enums.activity.ActivityType;
+import com.teamhub.enums.activity.TargetType;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -32,7 +33,7 @@ public class ActivityLog extends BaseEntity {
     private User actor;
 
     // 대상 엔티티 정보(유연하게 저장)
-    private String targetType; // TASK, PROJECT, MEMBER 등
+    private TargetType targetType; // TASK, PROJECT, MEMBER 등
     private Long targetId;
     private String targetName;
 

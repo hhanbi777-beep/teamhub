@@ -29,6 +29,7 @@ public class WorkspaceService {
     private final WorkspaceRepository workspaceRepository;
     private final WorkspaceMemberRepository workspaceMemberRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     @Transactional
     public WorkspaceResponse createWorkspace(Long userId, WorkspaceRequest req) {
@@ -123,6 +124,7 @@ public class WorkspaceService {
         }
 
         Workspace workspace = findWorkspaceById(workspaceId);
+        User inviterUser = findUserById(userId);
 
         WorkspaceMember newMember = WorkspaceMember.builder()
                 .workspace(workspace)
@@ -131,6 +133,9 @@ public class WorkspaceService {
                 .build();
 
         workspaceMemberRepository.save(newMember);
+
+        //초대 알림 발송
+        notificationService.sendMemberInvitedNotification(invitee, inviterUser, workspace.getName(), workspaceId);
 
         log.info("Member invited: {} to workspace: {}", invitee.getEmail(), workspaceId);
 

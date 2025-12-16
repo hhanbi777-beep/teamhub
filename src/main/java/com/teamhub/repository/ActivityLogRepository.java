@@ -11,7 +11,7 @@ import java.util.List;
 
 public interface ActivityLogRepository extends JpaRepository<ActivityLog, Long> {
 
-    @Query("SELECT a FROM ActivityLog a JOIN FETCH a.actor WHERE a.workspace.id = :workspacdId ORDER BY a.createdAt DESC")
+    @Query("SELECT a FROM ActivityLog a JOIN FETCH a.actor WHERE a.workspace.id = :workspaceId ORDER BY a.createdAt DESC")
     List<ActivityLog> findByWorkspaceIdOrderByCreatedAtDesc(@Param("workspaceId")Long workspaceId, Pageable pageable);
 
     @Query("SELECT a FROM ActivityLog a JOIN FETCH a.actor WHERE a.workspace.id = :workspaceId ORDER BY a.createdAt DESC")

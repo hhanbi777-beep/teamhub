@@ -6,6 +6,8 @@ import com.teamhub.domain.user.User;
 import com.teamhub.domain.workspace.WorkspaceMember;
 import com.teamhub.dto.request.CommentRequest;
 import com.teamhub.dto.response.CommentResponse;
+import com.teamhub.enums.activity.ActivityType;
+import com.teamhub.enums.activity.TargetType;
 import com.teamhub.exception.CustomException;
 import com.teamhub.repository.CommentRepository;
 import com.teamhub.repository.TaskRepository;
@@ -53,8 +55,8 @@ public class CommentService {
         activityLogService.log(
                 task.getProject().getWorkspace(),
                 author,
-                "COMMENT_ADDED",
-                "TASK",
+                ActivityType.COMMENT_ADDED,
+                TargetType.TASK,
                 task.getId(),
                 task.getTitle(),
                 "댓글: " + truncate(req.getContent(), 50)

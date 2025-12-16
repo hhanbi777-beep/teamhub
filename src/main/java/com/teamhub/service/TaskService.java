@@ -6,6 +6,8 @@ import com.teamhub.domain.user.User;
 import com.teamhub.domain.workspace.WorkspaceMember;
 import com.teamhub.dto.request.TaskRequest;
 import com.teamhub.dto.response.TaskResponse;
+import com.teamhub.enums.activity.ActivityType;
+import com.teamhub.enums.activity.TargetType;
 import com.teamhub.enums.project.TaskStatus;
 import com.teamhub.exception.CustomException;
 import com.teamhub.repository.ProjectRepository;
@@ -30,6 +32,8 @@ public class TaskService {
     private final TaskRepository taskRepository;
     private final ProjectRepository projectRepository;
     private final WorkspaceMemberRepository workspaceMemberRepository;
+    private final ActivityLogService activityLogService;
+    private final NotificationService notificationService;
 
     @Transactional
     public TaskResponse createTask(Long userId, Long projectId, TaskRequest request){
@@ -61,6 +65,22 @@ public class TaskService {
                 .build();
 
         taskRepository.save(task);
+
+        //활동로그
+        activityLogService.log(
+                project.getWorkspace(),
+                creator,
+                ActivityType.TASK_CREATED,
+                TargetType.TASK,
+                task.getId(),
+                task.getTitle(),
+                null
+        );
+
+        //담당자에게 알림(본인제외)
+        if (assignee != null && !assignee.getId().equals(userId)) {
+            notificationService.sendTaskAssignedNotification(task, creator);
+        }
 
         log.info("Task created: {} in project: {}", task.getTitle(), projectId);
 
@@ -106,7 +126,7 @@ public class TaskService {
     }
 
     @Transactional
-    public TaskResponse updateTask(Long userId, Long taskId, TaskRequest request){
+    public TaskResponse updateTask(Long userId, Long taskId, TaskRequest req){
         Task task = findTaskById(taskId);
         WorkspaceMember member = findMemberOrThrow(task.getProject().getWorkspace().getId(), userId);
 
@@ -114,13 +134,44 @@ public class TaskService {
             throw new CustomException("테스크 수정 권한이 없습니다", HttpStatus.FORBIDDEN);
         }
 
-        task.updateInfo(request.getTitle(), request.getDescription(), request.getPriority(), request.getDueDate());
+        User updater = findUserById(userId);
+        User previousAssignee = task.getAssignee();
 
-        if(request.getAssigneeId() != null) {
-            User assignee = findUserById(request.getAssigneeId());
-            findMemberOrThrow(task.getProject().getWorkspace().getId(), assignee.getId());
-            task.assignTo(assignee);
+        task.updateInfo(req.getTitle(), req.getDescription(), req.getPriority(), req.getDueDate());
+
+        if(req.getStatus() != null) {
+            String oldStatus = task.getStatus().name();
+            task.changeStatus(req.getStatus());
+
+            // 상태 변경 알림
+            notificationService.sendTaskStatusChangedNotification(task, updater, oldStatus, req.getStatus().name());
         }
+
+
+        if(req.getAssigneeId() != null) {
+            User newAssignee = findUserById(req.getAssigneeId());
+            findMemberOrThrow(task.getProject().getWorkspace().getId(), newAssignee.getId());
+            task.assignTo(newAssignee);
+
+            //새 담당자에게 알림(이전 담당자와 다르고, 본인이 아닐 떄)
+            boolean isDifferentAssignee = previousAssignee == null || !previousAssignee.getId().equals(newAssignee.getId());
+            boolean isNotSelf = !newAssignee.getId().equals(userId);
+
+            if(isDifferentAssignee && isNotSelf) {
+                notificationService.sendTaskAssignedNotification(task, updater);
+            }
+        }
+
+        // 활동로그
+        activityLogService.log(
+                task.getProject().getWorkspace(),
+                updater,
+                ActivityType.TASK_CREATED,
+                TargetType.TASK,
+                task.getId(),
+                task.getTitle(),
+                null
+        );
 
         return TaskResponse.of(task);
     }
@@ -134,7 +185,24 @@ public class TaskService {
             throw new CustomException("테스크 상태 변경 권한이 없습니다", HttpStatus.FORBIDDEN);
         }
 
+        User changer = findUserById(userId);
+        String oldStatus = task.getStatus().name();
+
         task.changeStatus(status);
+
+        //활동로그
+        activityLogService.log(
+                task.getProject().getWorkspace(),
+                changer,
+                ActivityType.TASK_STATUS_CHANGED,
+                TargetType.TASK,
+                task.getId(),
+                task.getTitle(),
+                oldStatus + " → " + status.name()
+        );
+        
+        //상태변셩 알림
+        notificationService.sendTaskStatusChangedNotification(task, changer, oldStatus, status.name());
 
         log.info("Task change status:{} -> {}", taskId, status);
 
@@ -149,6 +217,19 @@ public class TaskService {
         if(!member.canEditTasks()) {
             throw new CustomException("테스크 삭제 권한이 없습니다", HttpStatus.FORBIDDEN);
         }
+        
+        User deleter = findUserById(userId);
+        
+        //활동로그
+        activityLogService.log(
+                task.getProject().getWorkspace(),
+                deleter,
+                ActivityType.TASK_DELETED,
+                TargetType.TASK,
+                task.getId(),
+                task.getTitle(),
+                null
+        );
 
         taskRepository.delete(task);
         log.info("Task deleted: {}", taskId);
@@ -172,6 +253,6 @@ public class TaskService {
 
     private WorkspaceMember findMemberOrThrow(Long workspaceId, Long userId) {
         return workspaceMemberRepository.findByWorkspaceIdAndUserId(workspaceId, userId)
-                .orElseThrow(() -> new CustomException("", HttpStatus.FORBIDDEN));
+                .orElseThrow(() -> new CustomException("워크스페이스 접근 권한이 없습니다", HttpStatus.FORBIDDEN));
     }
 }

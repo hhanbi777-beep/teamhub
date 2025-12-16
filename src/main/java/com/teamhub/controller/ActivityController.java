@@ -1,6 +1,6 @@
 package com.teamhub.controller;
 
-import com.teamhub.dto.response.ActivityLogResonse;
+import com.teamhub.dto.response.ActivityLogResponse;
 import com.teamhub.dto.response.ApiResponse;
 import com.teamhub.service.ActivityLogService;
 import lombok.RequiredArgsConstructor;
@@ -20,11 +20,11 @@ public class ActivityController {
     private final ActivityLogService activityLogService;
 
     @GetMapping("/list")
-    public ApiResponse<List<ActivityLogResonse>> getActivities(Authentication authentication,
-                                                               @RequestParam Long workspaceId,
-                                                               @RequestParam(defaultValue = "20") int limit) {
+    public ApiResponse<List<ActivityLogResponse>> getActivities(Authentication authentication,
+                                                                @RequestParam Long workspaceId,
+                                                                @RequestParam(defaultValue = "20") int limit) {
         Long userId = (Long) authentication.getPrincipal();
-        List<ActivityLogResonse> res = activityLogService.getActivities(userId, workspaceId, limit);
+        List<ActivityLogResponse> res = activityLogService.getActivities(userId, workspaceId, limit);
         return ApiResponse.success(res);
     }
 }

@@ -46,9 +46,9 @@ public class NotificationController {
     }
 
     @PostMapping("/read-all")
-    public ApiResponse<Void> markAllAsRead(Authentication authentication) {
+    public ApiResponse<Integer> markAllAsRead(Authentication authentication) {
         Long userId = (Long) authentication.getPrincipal();
-        notificationService.markAllAsRead(userId);
-        return ApiResponse.success("모든 알림 읽음 처리 성공",null);
+        int count = notificationService.markAllAsRead(userId);
+        return ApiResponse.success("모든 알림 읽음 처리 성공 (" + count + "건)", count);
     }
 }
