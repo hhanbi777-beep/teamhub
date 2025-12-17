@@ -1,15 +1,20 @@
 package com.teamhub.exception;
 
+import com.teamhub.enums.ErrorCode;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
 @Getter
 public class CustomException extends RuntimeException {
 
-    private final HttpStatus status;
+    private final ErrorCode errorCode;
 
-    public CustomException(String message, HttpStatus status) {
-        super(message);
-        this.status = status;
+    public CustomException(ErrorCode errorCode) {
+        super(errorCode.getMessage());
+        this.errorCode = errorCode;
+    }
+
+    public HttpStatus getStatus() {
+        return errorCode.getStatus();
     }
 }

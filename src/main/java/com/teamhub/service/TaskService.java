@@ -6,6 +6,7 @@ import com.teamhub.domain.user.User;
 import com.teamhub.domain.workspace.WorkspaceMember;
 import com.teamhub.dto.request.TaskRequest;
 import com.teamhub.dto.response.TaskResponse;
+import com.teamhub.enums.ErrorCode;
 import com.teamhub.enums.activity.ActivityType;
 import com.teamhub.enums.activity.TargetType;
 import com.teamhub.enums.project.TaskStatus;
@@ -41,7 +42,7 @@ public class TaskService {
         WorkspaceMember member = findMemberOrThrow(project.getWorkspace().getId(), userId);
 
         if(!member.canEditTasks()) {
-            throw new CustomException("테스크 생성 권한이 없습니다", HttpStatus.FORBIDDEN);
+            throw new CustomException(ErrorCode.TASK_CREATE_DENIED);
         }
 
         User creator = findUserById(userId);
@@ -131,7 +132,7 @@ public class TaskService {
         WorkspaceMember member = findMemberOrThrow(task.getProject().getWorkspace().getId(), userId);
 
         if(!member.canEditTasks()) {
-            throw new CustomException("테스크 수정 권한이 없습니다", HttpStatus.FORBIDDEN);
+            throw new CustomException(ErrorCode.TASK_UPDATE_DENIED);
         }
 
         User updater = findUserById(userId);
@@ -182,7 +183,7 @@ public class TaskService {
         WorkspaceMember member = findMemberOrThrow(task.getProject().getWorkspace().getId(), userId);
 
         if(!member.canEditTasks()) {
-            throw new CustomException("테스크 상태 변경 권한이 없습니다", HttpStatus.FORBIDDEN);
+            throw new CustomException(ErrorCode.TASK_STATUS_CHANGE_DENIED);
         }
 
         User changer = findUserById(userId);
@@ -215,7 +216,7 @@ public class TaskService {
         WorkspaceMember member = findMemberOrThrow(task.getProject().getWorkspace().getId(), userId);
 
         if(!member.canEditTasks()) {
-            throw new CustomException("테스크 삭제 권한이 없습니다", HttpStatus.FORBIDDEN);
+            throw new CustomException(ErrorCode.TASK_DELETE_DENIED);
         }
         
         User deleter = findUserById(userId);
@@ -238,21 +239,21 @@ public class TaskService {
     //Helper methods
     private User findUserById(Long userId){
         return userRepository.findById(userId)
-                .orElseThrow(() -> new CustomException("사용자를 찾을 수 없습니다", HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
     }
 
     private Project findProjectById(Long projectId){
         return projectRepository.findById(projectId)
-                .orElseThrow(() -> new CustomException("프로젝트를 찾을 수 없습니다", HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new CustomException(ErrorCode.PROJECT_NOT_FOUND));
     }
 
     private Task findTaskById(Long taskId) {
         return taskRepository.findById(taskId)
-                .orElseThrow(() -> new CustomException("테스크를 찾을 수 없습니다", HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new CustomException(ErrorCode.TASK_NOT_FOUND));
     }
 
     private WorkspaceMember findMemberOrThrow(Long workspaceId, Long userId) {
         return workspaceMemberRepository.findByWorkspaceIdAndUserId(workspaceId, userId)
-                .orElseThrow(() -> new CustomException("워크스페이스 접근 권한이 없습니다", HttpStatus.FORBIDDEN));
+                .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_ACCESS_DENIED));
     }
 }

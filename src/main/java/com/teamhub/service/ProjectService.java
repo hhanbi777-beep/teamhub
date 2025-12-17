@@ -6,6 +6,7 @@ import com.teamhub.domain.workspace.Workspace;
 import com.teamhub.domain.workspace.WorkspaceMember;
 import com.teamhub.dto.request.ProjectRequest;
 import com.teamhub.dto.response.ProjectResponse;
+import com.teamhub.enums.ErrorCode;
 import com.teamhub.exception.CustomException;
 import com.teamhub.repository.ProjectRepository;
 import com.teamhub.repository.TaskRepository;
@@ -35,7 +36,7 @@ public class ProjectService {
         WorkspaceMember member = findMemberOrThrow(workspaceId, userId);
 
         if(!member.canManageProjects()) {
-            throw new CustomException("프로젝트 생성 권한이 없습니다", HttpStatus.FORBIDDEN);
+            throw new CustomException(ErrorCode.PROJECT_CREATE_DENIED);
         }
 
         Workspace workspace = findWorkspaceById(workspaceId);
@@ -78,7 +79,7 @@ public class ProjectService {
         Project project = findProjectById(projectId);
         WorkspaceMember member = findMemberOrThrow(project.getWorkspace().getId(),  userId);
         if (!member.canManageProjects()) {
-            throw new CustomException("프로젝트 수정권한이 없습니다", HttpStatus.FORBIDDEN);
+            throw new CustomException(ErrorCode.PROJECT_UPDATE_DENIED);
         }
 
         project.updateInfo(request.getName(), request.getDescription());
@@ -92,7 +93,7 @@ public class ProjectService {
         WorkspaceMember member = findMemberOrThrow(project.getWorkspace().getId(),  userId);
 
         if(!member.canManageProjects()) {
-            throw new CustomException("프로젝트 삭제 권한이 없습니다", HttpStatus.FORBIDDEN);
+            throw new CustomException(ErrorCode.PROJECT_DELETE_DENIED);
         }
 
         projectRepository.delete(project);
@@ -103,16 +104,16 @@ public class ProjectService {
     //Helper methods
     private Workspace findWorkspaceById(Long workspaceId) {
         return workspaceRepository.findById(workspaceId)
-                .orElseThrow(() -> new CustomException("워크스페이스를 찾을 수 없습니다", HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_NOT_FOUND));
     }
 
     private Project findProjectById(Long projectId) {
         return projectRepository.findById(projectId)
-                .orElseThrow(() -> new CustomException("프로젝트를 찾을 수 없습니다", HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new CustomException(ErrorCode.PROJECT_NOT_FOUND));
     }
 
     private WorkspaceMember findMemberOrThrow(Long workspaceId, Long userId) {
         return workspaceMemberRepository.findByWorkspaceIdAndUserId(workspaceId, userId)
-                .orElseThrow(() -> new CustomException("워크스페이스 접근권한이 없습니다", HttpStatus.FORBIDDEN));
+                .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_ACCESS_DENIED));
     }
 }

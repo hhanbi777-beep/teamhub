@@ -4,6 +4,7 @@ import com.teamhub.domain.notification.Notification;
 import com.teamhub.domain.project.Task;
 import com.teamhub.domain.user.User;
 import com.teamhub.dto.response.NotificationResponse;
+import com.teamhub.enums.ErrorCode;
 import com.teamhub.enums.notification.NotificationType;
 import com.teamhub.exception.CustomException;
 import com.teamhub.repository.NotificationRepository;
@@ -117,10 +118,10 @@ public class NotificationService {
 
     public void markAsRead(Long userId, Long notificationId) {
         Notification notification = notificationRepository.findById(notificationId)
-                .orElseThrow(() -> new CustomException("알림 접근 권한이 없습니다", HttpStatus.FORBIDDEN));
+                .orElseThrow(() -> new CustomException(ErrorCode.NOTIFICATION_ACCESS_DENIED));
 
         if(!notification.getRecipient().getId().equals(userId)) {
-            throw new CustomException("알림 접근 권한이 없습니다", HttpStatus.FORBIDDEN);
+            throw new CustomException(ErrorCode.NOTIFICATION_ACCESS_DENIED);
         }
 
         notification.markAsRead();

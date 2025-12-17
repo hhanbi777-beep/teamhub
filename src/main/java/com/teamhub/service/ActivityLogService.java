@@ -4,6 +4,7 @@ import com.teamhub.domain.activity.ActivityLog;
 import com.teamhub.domain.user.User;
 import com.teamhub.domain.workspace.Workspace;
 import com.teamhub.dto.response.ActivityLogResponse;
+import com.teamhub.enums.ErrorCode;
 import com.teamhub.enums.activity.ActivityType;
 import com.teamhub.enums.activity.TargetType;
 import com.teamhub.exception.CustomException;
@@ -54,6 +55,6 @@ public class ActivityLogService {
     //helper
     private void findMemberOrThrow(Long workspaceId, Long userId) {
         workspaceMemberRepository.findByWorkspaceIdAndUserId(workspaceId, userId)
-                .orElseThrow(() -> new CustomException("워크스페이스 접근권한이 없습니다", HttpStatus.FORBIDDEN));
+                .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_ACCESS_DENIED));
     }
 }

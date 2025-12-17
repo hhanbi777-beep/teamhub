@@ -6,6 +6,7 @@ import com.teamhub.dto.request.LoginRequest;
 import com.teamhub.dto.request.SignUpRequest;
 import com.teamhub.dto.request.TokenRefreshRequest;
 import com.teamhub.dto.response.AuthResponse;
+import com.teamhub.enums.ErrorCode;
 import com.teamhub.enums.user.AuthProvider;
 import com.teamhub.enums.user.UserRole;
 import com.teamhub.exception.CustomException;
@@ -37,7 +38,7 @@ public class AuthService {
     public AuthResponse signUp(SignUpRequest req) {
         //이메일 중복체크
         if(userRepository.existsByEmail(req.getEmail())) {
-            throw new CustomException("이미 사용중인 이메일입니다.", HttpStatus.CONFLICT);
+            throw new CustomException(ErrorCode.DUPLICATE_EMAIL);
         }
 
         //사용자 생성
@@ -60,11 +61,11 @@ public class AuthService {
     public AuthResponse login(LoginRequest req) {
         //사용자 조회
         User user = userRepository.findByEmail(req.getEmail())
-                .orElseThrow(() -> new CustomException("이메일 또는 비밀번호가 올바르지 않습니다", HttpStatus.UNAUTHORIZED));
+                .orElseThrow(() -> new CustomException(ErrorCode.INVALID_CREDENTIALS));
 
         //비밀번호 확인
         if(!passwordEncoder.matches(req.getPassword(), user.getPassword())) {
-            throw new CustomException("이메일 또는 비밀번호가 올바르지 않습니다", HttpStatus.UNAUTHORIZED);
+            throw new CustomException(ErrorCode.INVALID_CREDENTIALS);
         }
 
         log.info("User login: {}", user.getEmail());
@@ -77,12 +78,12 @@ public class AuthService {
     public AuthResponse refreshToken(TokenRefreshRequest req) {
         //리프레시 토큰 조회
         RefreshToken refreshToken = refreshTokenRepository.findByToken(req.getRefreshToken())
-                .orElseThrow(() -> new CustomException("유효하지 않은 리프레시 토큰입니다", HttpStatus.UNAUTHORIZED));
+                .orElseThrow(() -> new CustomException(ErrorCode.INVALID_TOKEN));
 
         //만료 체크
         if(refreshToken.isExpired()) {
             refreshTokenRepository.delete(refreshToken);
-            throw new CustomException("리프레시 토큰이 만료되었습니다. 다시 로그인해주세요", HttpStatus.UNAUTHORIZED);
+            throw new CustomException(ErrorCode.EXPIRED_TOKEN);
         }
 
         User user = refreshToken.getUser();
@@ -98,7 +99,7 @@ public class AuthService {
     @Transactional
     public void logout(Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new CustomException("사용자를 찾을 수 없습니다", HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         refreshTokenRepository.deleteByUser(user);
         log.info("User logout: {}", user.getEmail());

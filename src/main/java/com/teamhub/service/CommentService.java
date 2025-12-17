@@ -6,6 +6,7 @@ import com.teamhub.domain.user.User;
 import com.teamhub.domain.workspace.WorkspaceMember;
 import com.teamhub.dto.request.CommentRequest;
 import com.teamhub.dto.response.CommentResponse;
+import com.teamhub.enums.ErrorCode;
 import com.teamhub.enums.activity.ActivityType;
 import com.teamhub.enums.activity.TargetType;
 import com.teamhub.exception.CustomException;
@@ -90,7 +91,7 @@ public class CommentService {
         Comment comment = findCommentById(commentId);
 
         if(!comment.getAuthor().getId().equals(userId)) {
-            throw new CustomException("본인의 댓글만 수정할 수 있습니다", HttpStatus.FORBIDDEN);
+            throw new CustomException(ErrorCode.COMMENT_UPDATE_DENIED);
         }
 
         comment.updateContent(req.getContent());
@@ -107,7 +108,7 @@ public class CommentService {
 
         //본인 댓글이거나 관리자 이상만 삭제 가능
         if(!comment.getAuthor().getId().equals(userId) && !member.canManageMembers()) {
-            throw new CustomException("댓글 삭제 권한이 없습니다", HttpStatus.FORBIDDEN);
+            throw new CustomException(ErrorCode.COMMENT_DELETE_DENIED);
         }
 
         commentRepository.delete(comment);
@@ -122,21 +123,21 @@ public class CommentService {
 
     private User findUserById(Long userId) {
         return userRepository.findById(userId)
-                .orElseThrow(() -> new CustomException("사용자를 찾을 수 없습니다", HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
     }
 
     private Task findTaskById(Long taskId) {
         return taskRepository.findById(taskId)
-                .orElseThrow(() -> new CustomException("테스크를 찾을 수 없습니다", HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new CustomException(ErrorCode.TASK_NOT_FOUND));
     }
 
     private Comment findCommentById(Long commentId) {
         return commentRepository.findById(commentId)
-                .orElseThrow(() -> new CustomException("댓글을 찾을 수 없습니다", HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new CustomException(ErrorCode.COMMENT_NOT_FOUND));
     }
 
     private WorkspaceMember findMemberOrThrow(Long workspaceId, Long userId) {
         return workspaceMemberRepository.findByWorkspaceIdAndUserId(workspaceId, userId)
-                .orElseThrow(() -> new CustomException("워크스페이스 접근 권한이 없습니다", HttpStatus.FORBIDDEN));
+                .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_NOT_FOUND));
     }
 }
