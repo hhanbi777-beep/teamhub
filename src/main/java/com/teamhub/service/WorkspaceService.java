@@ -7,6 +7,7 @@ import com.teamhub.dto.request.InviteMemberRequest;
 import com.teamhub.dto.request.WorkspaceRequest;
 import com.teamhub.dto.response.MemberResponse;
 import com.teamhub.dto.response.WorkspaceResponse;
+import com.teamhub.enums.ErrorCode;
 import com.teamhub.enums.workspace.WorkspaceRole;
 import com.teamhub.exception.CustomException;
 import com.teamhub.repository.UserRepository;
@@ -85,7 +86,7 @@ public class WorkspaceService {
         WorkspaceMember member = findMemberOrThrow(workspaceId, userId);
 
         if(!member.canManageProjects()) {
-            throw new CustomException("워크스페이스 삭제는 소유자만 가능합니다." , HttpStatus.FORBIDDEN);
+            throw new CustomException(ErrorCode.WORKSPACE_DELETE_DENIED);
         }
         workspace.updateInfo(req.getName(), req.getDescription());
 
@@ -98,7 +99,7 @@ public class WorkspaceService {
         WorkspaceMember member = findMemberOrThrow(workspaceId, userId);
 
         if(!member.isOwner()) {
-            throw new CustomException("워크스페이스는 삭제 소유자만 가능합니다", HttpStatus.FORBIDDEN);
+            throw new CustomException(ErrorCode.WORKSPACE_DELETE_DENIED);
         }
         workspaceRepository.delete(workspace);
         log.info("Workspace delete: {}", workspaceId);
@@ -109,18 +110,18 @@ public class WorkspaceService {
         WorkspaceMember inviter = findMemberOrThrow(workspaceId, userId);
 
         if(!inviter.canManageMembers()) {
-            throw new CustomException("멤버 초대 권한이 없습니다", HttpStatus.FORBIDDEN);
+            throw new CustomException(ErrorCode.MEMBER_INVITE_DENIED);
         }
 
         if(req.getRole() == WorkspaceRole.OWNER) {
-            throw new CustomException("OWNER 역할은 부여할 수 없습니다", HttpStatus.BAD_REQUEST);
+            throw new CustomException(ErrorCode.CANNOT_ASSIGN_OWNER);
         }
 
         User invitee = userRepository.findByEmail(req.getEmail())
-                .orElseThrow(() -> new CustomException("해당 이메일의 사용자를 찾을 수 없습니다", HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new CustomException(ErrorCode.EMAIL_NOT_FOUND));
 
         if(workspaceMemberRepository.existsByWorkspaceIdAndUserId(workspaceId, invitee.getId())) {
-            throw new CustomException("이미 워크스페이스 멤버입니다", HttpStatus.CONFLICT);
+            throw new CustomException(ErrorCode.MEMBER_ALREADY_EXISTS);
         }
 
         Workspace workspace = findWorkspaceById(workspaceId);
@@ -157,14 +158,14 @@ public class WorkspaceService {
         WorkspaceMember req = findMemberOrThrow(workspaceId, userId);
 
         if(!req.canManageMembers()) {
-            throw new CustomException("멤버 제거 권한이 없습니다", HttpStatus.FORBIDDEN);
+            throw new CustomException(ErrorCode.MEMBER_REMOVE_DENIED);
         }
 
         WorkspaceMember targetMember = workspaceMemberRepository.findById(memberId)
-                .orElseThrow(() -> new CustomException("멤버를 찾을 수 없습니다", HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
         if(!targetMember.isOwner()) {
-            throw new CustomException("소유자는 제거할 수 없습니다", HttpStatus.BAD_REQUEST);
+            throw new CustomException(ErrorCode.CANNOT_REMOVE_OWNER);
         }
 
         workspaceMemberRepository.delete(targetMember);
@@ -174,17 +175,17 @@ public class WorkspaceService {
     //Helper methods
     private User findUserById(Long userId) {
         return userRepository.findById(userId)
-                .orElseThrow(() -> new CustomException("사용자를 찾을 수 없습니다", HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
     }
 
     private Workspace findWorkspaceById(Long workspaceId) {
         return workspaceRepository.findById(workspaceId)
-                .orElseThrow(() -> new CustomException("워크스페이스를 찾을 수 없습니다", HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_NOT_FOUND));
     }
 
     private WorkspaceMember findMemberOrThrow(Long workspaceId, Long userId) {
         return workspaceMemberRepository.findByWorkspaceIdAndUserId(workspaceId, userId)
-                .orElseThrow(() -> new CustomException("워크스페이스 접근 권한이 없습니다", HttpStatus.UNAUTHORIZED));
+                .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_ACCESS_DENIED));
     }
 
 }
