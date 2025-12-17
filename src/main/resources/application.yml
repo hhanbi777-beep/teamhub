@@ -33,3 +33,9 @@ jwt:
   secret: ThisIsAVeryLongSecretKeyForJWTTokenGenerationMustBeAtLeast256Bits
   access-token-validity: 3600000      # 1시간
   refresh-token-validity: 604800000   # 7일
+
+# 파일 업로드 설정
+file:
+  upload-dir: uploads
+  max-size: 10485760  # 10MB
+  allowed-types: jpg,jpeg,png,gif,pdf,doc,docx,xls,xlsx,ppt,pptx,txt,zip
