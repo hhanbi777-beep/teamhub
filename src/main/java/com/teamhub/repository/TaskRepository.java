@@ -46,4 +46,36 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
             @Param("dueDateFrom") LocalDate dueDateFrom,
             @Param("dueDateTo") LocalDate dueDateTo
     );
+
+    // 워크스페이스 내 전체 태스크 수
+    @Query("SELECT COUNT(t) FROM Task t WHERE t.project.workspace.id = :workspaceId")
+    Long countByWorkspaceId(@Param("workspaceId") Long workspaceId);
+
+    // 워크스페이스 내 상태별 태스크 수
+    @Query("SELECT COUNT(t) FROM Task t WHERE t.project.workspace.id = :workspaceId AND t.status = :status")
+    Long countByWorkspaceIdAndStatus(@Param("workspaceId") Long workspaceId, @Param("status") TaskStatus status);
+
+    // 멤버별 배정된 태스크 수
+    @Query("SELECT t.assignee.id, COUNT(t) FROM Task t " +
+        "WHERE t.project.workspace.id = :workspaceId AND t.assignee IS NOT NULL " +
+        "GROUP BY t.assignee.id")
+    List<Object[]> countByWorkspaceIdGroupByAssignee(@Param("workspaceId") Long workspaceId);
+
+    // 멤버별 완료된 태스크 수
+    @Query("SELECT t.assignee.id, COUNT(t) FROM Task t " +
+        "WHERE t.project.workspace.id = :workspaceId AND t.assignee IS NOT NULL AND t.status = 'DONE' " +
+        "GROUP BY t.assignee.id")
+    List<Object[]> countCompletedByWorkspaceIdGroupByAssignee(@Param("workspaceId") Long workspaceId);
+
+    // 마감 임박 태스크 (7일 이내)
+    @Query("SELECT t FROM Task t WHERE t.project.workspace.id = :workspaceId " +
+        "AND t.status != 'DONE' AND t.dueDate IS NOT NULL " +
+        "AND t.dueDate BETWEEN :today AND :endDate ORDER BY t.dueDate ASC")
+    List<Task> findUpcomingTasks(@Param("workspaceId") Long workspaceId,
+        @Param("today") java.time.LocalDate today,
+        @Param("endDate") java.time.LocalDate endDate);
+
+    // 전체 태스크 수 (관리자용)
+    @Query("SELECT COUNT(t) FROM Task t")
+    Long countAll();
 }

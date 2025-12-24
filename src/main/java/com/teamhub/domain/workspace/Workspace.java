@@ -31,7 +31,7 @@ public class Workspace extends BaseEntity {
 
     @Builder.Default
     @OneToMany(mappedBy = "workspace", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<WorkspaceMember> member = new ArrayList<>();
+    private List<WorkspaceMember> members = new ArrayList<>();
 
     public void updateInfo(String name, String description) {
         this.name = name;
