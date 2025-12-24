@@ -69,7 +69,7 @@ public class FileService {
 
         User uploader = findUserById(userId);
         String originalName = file.getOriginalFilename();
-        String extension = getExtention(originalName);
+        String extension = getExtension(originalName);
         String storedName = UUID.randomUUID().toString() + "." + extension;
 
         try {
@@ -169,13 +169,13 @@ public class FileService {
             throw new CustomException(ErrorCode.FILE_SIZE_EXCEEDED);
         }
 
-        String extention = getExtention(file.getOriginalFilename());
+        String extention = getExtension(file.getOriginalFilename());
         if(!fileProperties.getAllowedTypeList().contains(extention.toLowerCase())) {
             throw new CustomException(ErrorCode.INVALID_FILE_TYPE);
         }
     }
 
-    private String getExtention(String filename) {
+    private String getExtension(String filename) {
         if (filename == null || !filename.contains(".")) {
             return "";
         }

@@ -21,6 +21,9 @@ public enum ErrorCode {
     // User
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다"),
 
+    // Admin
+    ADMIN_ACCESS_DENIED(HttpStatus.FORBIDDEN, "관리자 권한이 필요합니다"),
+
     // Workspace
     WORKSPACE_NOT_FOUND(HttpStatus.NOT_FOUND, "워크스페이스를 찾을 수 없습니다"),
     WORKSPACE_ACCESS_DENIED(HttpStatus.FORBIDDEN, "워크스페이스 접근 권한이 없습니다"),
