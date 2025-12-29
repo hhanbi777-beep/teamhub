@@ -1,0 +1,41 @@
+spring:
+  application:
+    name: teamhub
+
+  # DB 설정 (Docker MySQL 연결)
+  datasource:
+    url: jdbc:mysql://localhost:3306/teamhub?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    username: teamhub
+    password: teamhub1234
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  # JPA 설정
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQLDialect
+
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE  # 파라미터 값까지 보기
+
+server:
+  port: 8080
+
+
+# JWT 설정
+jwt:
+  secret: ThisIsAVeryLongSecretKeyForJWTTokenGenerationMustBeAtLeast256Bits
+  access-token-validity: 3600000      # 1시간
+  refresh-token-validity: 604800000   # 7일
+
+# 파일 업로드 설정
+file:
+  upload-dir: uploads
+  max-size: 10485760  # 10MB
+  allowed-types: jpg,jpeg,png,gif,pdf,doc,docx,xls,xlsx,ppt,pptx,txt,zip
