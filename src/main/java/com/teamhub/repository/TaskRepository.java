@@ -3,6 +3,8 @@ package com.teamhub.repository;
 import com.teamhub.domain.project.Task;
 import com.teamhub.enums.project.TaskPriority;
 import com.teamhub.enums.project.TaskStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -78,4 +80,15 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     // 전체 태스크 수 (관리자용)
     @Query("SELECT COUNT(t) FROM Task t")
     Long countAll();
+
+    //Task 목록 페이징
+    Page<Task> findAllByProjectId(Long projectId, Pageable pageable);
+
+    // 마감일 범위 내 태스크 조회 (스케줄러용)
+    @Query("SELECT t FROM Task t " +
+            "WHERE t.dueDate BETWEEN :startDate AND :endDate " +
+            "AND t.status != 'DONE' " +
+            "AND t.assignee IS NOT NULL")
+    List<Task> findTasksDueBetween(@Param("startDate") LocalDate startDate,
+                                   @Param("endDate") LocalDate endDate);
 }

@@ -1,5 +1,6 @@
 package com.teamhub.dto.request;
 
+import com.teamhub.config.validator.ValidPassword;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -15,7 +16,7 @@ public class SignUpRequest {
     private String email;
 
     @NotBlank(message = "비밀번호는 필수입니다")
-    @Size(min = 8, message = "비밀번호는 8자 이상이어야 합니다.")
+    @ValidPassword
     private String password;
 
     @NotBlank(message = "이름은 필수입니다")

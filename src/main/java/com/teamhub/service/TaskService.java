@@ -17,6 +17,8 @@ import com.teamhub.repository.UserRepository;
 import com.teamhub.repository.WorkspaceMemberRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -232,8 +234,8 @@ public class TaskService {
                 null
         );
 
-        taskRepository.delete(task);
-        log.info("Task deleted: {}", taskId);
+        task.delete();
+        log.info("Task soft deleted: {}", taskId);
     }
 
     //Helper methods
@@ -255,5 +257,14 @@ public class TaskService {
     private WorkspaceMember findMemberOrThrow(Long workspaceId, Long userId) {
         return workspaceMemberRepository.findByWorkspaceIdAndUserId(workspaceId, userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.WORKSPACE_ACCESS_DENIED));
+    }
+
+    @Transactional(readOnly = true)
+    public Page<TaskResponse> getTasksPaged(Long userId, Long projectId, Pageable pageable) {
+        Project project = findProjectById(projectId);
+        findMemberOrThrow(project.getWorkspace().getId(), userId);
+
+        return taskRepository.findAllByProjectId(projectId, pageable)
+                .map(TaskResponse::of);
     }
 }

@@ -1,8 +1,6 @@
 package com.teamhub.controller;
 
-import com.teamhub.dto.request.LoginRequest;
-import com.teamhub.dto.request.SignUpRequest;
-import com.teamhub.dto.request.TokenRefreshRequest;
+import com.teamhub.dto.request.*;
 import com.teamhub.dto.response.ApiResponse;
 import com.teamhub.dto.response.AuthResponse;
 import com.teamhub.service.AuthService;
@@ -45,5 +43,26 @@ public class AuthController {
         Long userId = (Long) authentication.getPrincipal();
         authService.logout(userId);
         return ApiResponse.success("로그아웃 성공", null);
+    }
+
+    @PostMapping("/change-password")
+    public ApiResponse<Void> changePassword(
+            @Valid @RequestBody PasswordChangeRequest request,
+            Authentication authentication) {
+        Long userId = (Long) authentication.getPrincipal();
+        authService.changePassword(userId, request);
+        return ApiResponse.success("비밀번호가 변경되었습니다", null);
+    }
+
+    @PostMapping("/password-reset/request")
+    public ApiResponse<String> requestPasswordReset(@Valid @RequestBody PasswordResetRequest request) {
+        String token = authService.requestPasswordReset(request);
+        return ApiResponse.success("비밀번호 재설정 이메일이 발송되었습니다", token);
+    }
+
+    @PostMapping("/password-reset/confirm")
+    public ApiResponse<Void> confirmPasswordReset(@Valid @RequestBody PasswordResetConfirmRequest request) {
+        authService.confirmPasswordReset(request);
+        return ApiResponse.success("비밀번호가 재설정되었습니다", null);
     }
 }

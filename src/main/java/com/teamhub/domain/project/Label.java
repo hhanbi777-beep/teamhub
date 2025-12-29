@@ -4,19 +4,14 @@ import com.teamhub.domain.common.BaseEntity;
 import com.teamhub.domain.workspace.Workspace;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.SQLRestriction;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
-@Table(name = "projects")
-@SQLRestriction("is_deleted = false")
+@Table(name = "labels")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
-public class Project extends BaseEntity {
+public class Label extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -25,18 +20,15 @@ public class Project extends BaseEntity {
     @Column(nullable = false)
     private String name;
 
-    private String description;
+    @Column(nullable = false)
+    private String color;  // HEX 컬러 코드 (#FF5733)
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "workspace_id", nullable = false)
     private Workspace workspace;
 
-    @Builder.Default
-    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Task> tasks = new ArrayList<>();
-
-    public void updateInfo(String name, String description) {
+    public void update(String name, String color) {
         this.name = name;
-        this.description = description;
+        this.color = color;
     }
 }

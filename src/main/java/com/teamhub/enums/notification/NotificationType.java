@@ -5,5 +5,6 @@ public enum NotificationType {
     TASK_STATUS_CHANGED,
     COMMENT_ADDED,
     MEMBER_INVITED,
-    TASK_DUE_SOON
+    TASK_DUE_SOON,
+    DUE_DATE_REMINDER
 }

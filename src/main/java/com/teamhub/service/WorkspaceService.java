@@ -101,8 +101,8 @@ public class WorkspaceService {
         if(!member.isOwner()) {
             throw new CustomException(ErrorCode.WORKSPACE_DELETE_DENIED);
         }
-        workspaceRepository.delete(workspace);
-        log.info("Workspace delete: {}", workspaceId);
+        workspace.delete();
+        log.info("Workspace soft delete: {}", workspaceId);
     }
 
     @Transactional
