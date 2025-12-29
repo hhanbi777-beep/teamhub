@@ -96,9 +96,9 @@ public class ProjectService {
             throw new CustomException(ErrorCode.PROJECT_DELETE_DENIED);
         }
 
-        projectRepository.delete(project);
+        project.delete();
 
-        log.info("Project deleted: {}", projectId);
+        log.info("Project soft deleted: {}", projectId);
     }
 
     //Helper methods

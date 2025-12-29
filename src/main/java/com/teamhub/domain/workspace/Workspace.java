@@ -4,12 +4,14 @@ import com.teamhub.domain.common.BaseEntity;
 import com.teamhub.domain.user.User;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
 @Table(name = "workspaces")
+@SQLRestriction("is_deleted = false")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor

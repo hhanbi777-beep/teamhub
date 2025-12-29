@@ -1,15 +1,15 @@
 package com.teamhub.service;
 
+import com.teamhub.domain.user.PasswordResetToken;
 import com.teamhub.domain.user.RefreshToken;
 import com.teamhub.domain.user.User;
-import com.teamhub.dto.request.LoginRequest;
-import com.teamhub.dto.request.SignUpRequest;
-import com.teamhub.dto.request.TokenRefreshRequest;
+import com.teamhub.dto.request.*;
 import com.teamhub.dto.response.AuthResponse;
 import com.teamhub.enums.ErrorCode;
 import com.teamhub.enums.user.AuthProvider;
 import com.teamhub.enums.user.UserRole;
 import com.teamhub.exception.CustomException;
+import com.teamhub.repository.PasswordResetTokenRepository;
 import com.teamhub.repository.RefreshTokenRepository;
 import com.teamhub.repository.UserRepository;
 import com.teamhub.security.JwtProperties;
@@ -33,6 +33,9 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final JwtProperties jwtProperties;
+    private final LoginAttemptService loginAttemptService;
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
+
 
     @Transactional
     public AuthResponse signUp(SignUpRequest req) {
@@ -59,6 +62,14 @@ public class AuthService {
 
     @Transactional
     public AuthResponse login(LoginRequest req) {
+
+        String email = req.getEmail();
+
+        //계정 잠금 확인
+        if (loginAttemptService.isBlocked(email)) {
+            throw new CustomException(ErrorCode.ACCOUNT_LOCKED);
+        }
+
         //사용자 조회
         User user = userRepository.findByEmail(req.getEmail())
                 .orElseThrow(() -> new CustomException(ErrorCode.INVALID_CREDENTIALS));
@@ -135,5 +146,52 @@ public class AuthService {
                         .profileImage(user.getProfileImage())
                         .build())
                 .build();
+    }
+
+    @Transactional
+    public void changePassword(Long userId, PasswordChangeRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+            throw new CustomException(ErrorCode.INVALID_PASSWORD);
+        }
+
+        user.changePassword(passwordEncoder.encode(request.getNewPassword()));
+        log.info("Password changed for user: {}", userId);
+    }
+
+    @Transactional
+    public String requestPasswordReset(PasswordResetRequest request) {
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        // 기존 토큰 무효화
+        PasswordResetToken token = PasswordResetToken.create(user, 30); // 30분 유효
+        passwordResetTokenRepository.save(token);
+
+        // TODO: 이메일 발송 (나중에 구현)
+        log.info("Password reset token created for user: {}", user.getEmail());
+
+        return token.getToken(); // 개발용으로 토큰 반환 (실제로는 이메일로만)
+    }
+
+    @Transactional
+    public void confirmPasswordReset(PasswordResetConfirmRequest request) {
+        PasswordResetToken token = passwordResetTokenRepository.findByToken(request.getToken())
+                .orElseThrow(() -> new CustomException(ErrorCode.INVALID_TOKEN));
+
+        if (!token.isValid()) {
+            throw new CustomException(ErrorCode.TOKEN_EXPIRED);
+        }
+
+        User user = token.getUser();
+        user.changePassword(passwordEncoder.encode(request.getNewPassword()));
+        token.markAsUsed();
+
+        // 로그인 시도 횟수 초기화
+        loginAttemptService.loginSucceeded(user.getEmail());
+
+        log.info("Password reset completed for user: {}", user.getEmail());
     }
 }

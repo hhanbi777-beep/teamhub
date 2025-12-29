@@ -6,11 +6,15 @@ import com.teamhub.enums.project.TaskPriority;
 import com.teamhub.enums.project.TaskStatus;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "tasks")
+@SQLRestriction("is_deleted = false")
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -55,11 +59,27 @@ public class Task extends BaseEntity {
     @Builder.Default
     private Integer displayOrder = 0;
 
+    @OneToMany(mappedBy = "task", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<TaskLabel> taskLabels = new ArrayList<>();
+
     public void updateInfo(String title, String description, TaskPriority taskPrioity, LocalDate dueDate) {
         this.title = title;
         this.description = description;
         this.priority = taskPrioity;
         this.dueDate = dueDate;
+    }
+
+    public void addLabel(Label label) {
+        TaskLabel taskLabel = TaskLabel.builder()
+                .task(this)
+                .label(label)
+                .build();
+        this.taskLabels.add(taskLabel);
+    }
+
+    public void removeLabel(Label label) {
+        this.taskLabels.removeIf(tl -> tl.getLabel().getId().equals(label.getId()));
     }
 
     public void changeStatus(TaskStatus status) {

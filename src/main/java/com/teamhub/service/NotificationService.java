@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 public class NotificationService {
 
     private final NotificationRepository notificationRepository;
+    private final WebSocketNotificationService webSocketNotificationService;
 
     @Transactional
     public void sendTaskAssignedNotification(Task task, User assigner) {
@@ -38,8 +39,12 @@ public class NotificationService {
                 .targetId(task.getId())
                 .build();
 
+        Notification saved = notificationRepository.save(notification);
         notificationRepository.save(notification);
         log.info("Task assigned notification sent to user" + task.getAssignee().getId());
+
+        // 실시간 알림 전송
+        sendRealTimeNotification(saved);
     }
 
     @Transactional
@@ -55,7 +60,11 @@ public class NotificationService {
                     .targetId(task.getId())
                     .build();
 
+            Notification saved = notificationRepository.save(notification);
             notificationRepository.save(notification);
+
+            // 실시간 알림 전송
+            sendRealTimeNotification(saved);
         }
     }
 
@@ -132,6 +141,19 @@ public class NotificationService {
         int updateCount = notificationRepository.markAllAsRead(userId);
         log.info("All notifications marked as read for user: {}", userId);
         return updateCount;
+    }
+
+    // 실시간 알림 전송 헬퍼 메서드
+    private void sendRealTimeNotification(Notification notification) {
+        try {
+            webSocketNotificationService.sendToUser(
+                    notification.getRecipient().getId(),
+                    NotificationResponse.of(notification)
+            );
+        } catch (Exception e) {
+            log.warn("Failed to send real-time notification: {}", e.getMessage());
+            // 실시간 전송 실패해도 DB에는 저장되어 있으므로 예외 무시
+        }
     }
 
 }
