@@ -63,6 +63,15 @@ public class Task extends BaseEntity {
     @Builder.Default
     private List<TaskLabel> taskLabels = new ArrayList<>();
 
+    @OneToMany(mappedBy = "task", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("displayOrder ASC")
+    @Builder.Default
+    private List<ChecklistItem> checklistItems = new ArrayList<>();
+
+    public void addChecklistItem(ChecklistItem item) {
+        this.checklistItems.add(item);
+    }
+
     public void updateInfo(String title, String description, TaskPriority taskPrioity, LocalDate dueDate) {
         this.title = title;
         this.description = description;
