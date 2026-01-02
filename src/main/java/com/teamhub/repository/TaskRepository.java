@@ -6,11 +6,13 @@ import com.teamhub.enums.project.TaskStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 public interface TaskRepository extends JpaRepository<Task, Long> {
 
@@ -91,4 +93,22 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
             "AND t.assignee IS NOT NULL")
     List<Task> findTasksDueBetween(@Param("startDate") LocalDate startDate,
                                    @Param("endDate") LocalDate endDate);
+
+    // 삭제된 태스크 조회 (Soft Delete 우회)
+    @Query(value = "SELECT * FROM tasks t " +
+            "JOIN projects p ON t.project_id = p.id " +
+            "WHERE p.workspace_id = :workspaceId AND t.is_deleted = true " +
+            "ORDER BY t.deleted_at DESC", nativeQuery = true)
+    List<Task> findDeletedByWorkspaceId(@Param("workspaceId") Long workspaceId);
+
+    // 삭제된 태스크 포함 조회
+    @Query(value = "SELECT * FROM tasks WHERE id = :taskId", nativeQuery = true)
+    Optional<Task> findByIdIncludeDeleted(@Param("taskId") Long taskId);
+
+    // 30일 이상 지난 삭제 항목 영구 삭제
+    @Modifying
+    @Query(value = "DELETE FROM tasks t USING projects p " +
+            "WHERE t.project_id = p.id AND p.workspace_id = :workspaceId " +
+            "AND t.is_deleted = true AND t.deleted_at < NOW() - INTERVAL 30 DAY", nativeQuery = true)
+    int deleteOldDeletedItems(@Param("workspaceId") Long workspaceId);
 }

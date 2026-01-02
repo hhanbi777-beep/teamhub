@@ -6,5 +6,6 @@ public enum NotificationType {
     COMMENT_ADDED,
     MEMBER_INVITED,
     TASK_DUE_SOON,
-    DUE_DATE_REMINDER
+    DUE_DATE_REMINDER,
+    MENTIONED,
 }

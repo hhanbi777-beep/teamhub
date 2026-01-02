@@ -34,6 +34,7 @@ public class CommentService {
     private final WorkspaceMemberRepository workspaceMemberRepository;
     private final ActivityLogService activityLogService;
     private final NotificationService notificationService;
+    private final MentionService mentionService;
 
     @Transactional
     public CommentResponse createComment(Long userId, Long taskId, CommentRequest req) {
@@ -58,15 +59,16 @@ public class CommentService {
                 author,
                 ActivityType.COMMENT_ADDED,
                 TargetType.TASK,
-                task.getId(),
+                comment.getId(),
                 task.getTitle(),
                 "댓글: " + truncate(req.getContent(), 50)
         );
 
-        //테스크 담당자에게 알림(본인제외)
-        if(task.getAssignee() != null && !task.getAssignee().getId().equals(userId)) {
-            notificationService.sendCommentNotification(task, author, req.getContent());
-        }
+        // 댓글 알림 (담당자에게)
+        notificationService.sendCommentNotification(task, author, req.getContent());
+
+        //멘션처리 추가
+        mentionService.processMentions(req.getContent(), task, author, workspaceId);
 
         log.info("Comment created on task: {} by user: {}", taskId, userId);
 
